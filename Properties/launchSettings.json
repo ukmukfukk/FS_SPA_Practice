@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "FS_SPA_Practice": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:65213;http://localhost:65214"
+    }
+  }
+}
