@@ -16,6 +16,7 @@ module Client =
         ListModel.FromSeq [
             "John"
             "Paul"
+            "George"
         ]
 
 
