@@ -33,15 +33,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: .Net Build
-        run: dotnet build
-      # - name: Build with Jekyll
-      #   uses: actions/jekyll-build-pages@v1
-      #   with:
-      #     source: ./wwwroot/
-      #     destination: ./_site
-      # - name: Upload artifact
-      #   uses: actions/upload-pages-artifact@v3
-      - name: Upload static site
+        run: dotnet build -c release
+
+      - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./wwwroot/
