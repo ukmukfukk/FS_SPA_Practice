@@ -706,7 +706,7 @@ let _c_1=Lazy((_i) => class $StartupCode_Client {
   }
   static People;
   static {
-    this.People=FromSeq(["John", "Paul"]);
+    this.People=FromSeq(["John", "Paul", "George"]);
   }
 });
 class Text extends TemplateHole {
