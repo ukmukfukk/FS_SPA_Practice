@@ -7,10 +7,7 @@ open WebSharper.UI.Client
 open WebSharper.UI.Templating
 
 module Server =
-
-
-    let People =
-        ListModel.FromSeq [
+    let mutable PeopleList = [
             "John"
             "Paul"
             "George"
@@ -18,21 +15,18 @@ module Server =
         ]
 
     [<Rpc>]
-    let GetNames = 
-        async {
-            return People
-        }
-        |> Async.StartAsTask
-
-    //[<Rpc>]
-    //let Getnames2 =
-    //    People
-        
-
-    [<Rpc>]
     let AddName (name: string) =
         async {         
-            People.Add(name)
+            PeopleList <- PeopleList @ [name]
+            printfn "%A" name
+            printfn "%A" PeopleList
+        }
+
+    [<Rpc>]        
+    let GetUsers () =
+        async {
+            printfn "GetUsers %A" PeopleList
+            return PeopleList
         }
 
 [<JavaScript>]
@@ -41,50 +35,42 @@ module Client =
     // and refresh your browser, no need to recompile unless you add or remove holes.
     type IndexTemplate = Template<"wwwroot/index.html", ClientLoad.FromDocument>
 
-    //let People =
-    //    ListModel.FromSeq [
-    //        "John"
-    //        "Paul"
-    //        "George"
-    //    ]
-
-
     [<SPAEntryPoint>]
     let Main () =
-        let newName = Var.Create ""
+        let newName = Var.Create "" // Create a Var to hold the new name
 
-// Pseudocode:
-// 1. LoadNames is a Task<List<string>> (from Server.GetNames).
-// 2. To extract the list, use Async.AwaitTask to convert Task to Async, then run the async to get the result.
-// 3. In F#, you can use Async.RunSynchronously or bind in an async workflow.
-// 4. For UI binding, you typically want to use a View or Var to hold the list and update it when the task completes.
+        let People = ListModel.Create<string, string> (fun name -> name) [] // Create an empty ListModel 
 
-        let namesVar = ListModel.Create<string, string> (fun name -> name) [] // Create an empty ListModel
-
-        let LoadNames =
+        let LoadUsersAsync =
             async {
-                let! names = Server.GetNames |> Async.AwaitTask
-                namesVar.Value <- names
-            }
-            |> Async.Start
+                let! users = Server.GetUsers()
+                People.Set(users) // Set the ListModel with the names from the server)        
+        }           
 
-        // Now namesVar.View gives you a View<List<string>> you can use in your UI.
-        // Example usage in DocSeqCached:
+        // This is not working for fethcing, because it's not an async, just a Val
+        let LoadUsers =
+            LoadUsersAsync
+            |> Async.StartImmediate            
 
-        let AddName name = 
-            Server.AddName name
+        let AddName name =
+            Server.AddName name |> Async.Start
 
         IndexTemplate.Main()
             .ListContainer(
-                namesVar.View.DocSeqCached(fun (name: string) ->            
+                People.View.DocSeqCached(fun (name: string) ->            
                     IndexTemplate.ListItem().Name(name).Doc()
                 )
             )
-
-            .Name(newName)
-            .Add(fun _ ->
-                AddName newName.Value
-                newName.Value <- ""
+            .LoadUsers(fun e -> 
+                LoadUsersAsync 
+                |> Async.StartImmediate
             )
+            .Name(newName)
+            .Add(fun _ -> 
+                AddName newName.Value
+                newName.Set ""
+                LoadUsersAsync
+                |> Async.StartImmediate
+                )
             .Doc()
         |> Doc.RunById "main"

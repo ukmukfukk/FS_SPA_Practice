@@ -33,6 +33,8 @@ let main args =
         .UseStaticFiles()
         //Enable if you want to make RPC calls to server
         //.UseWebSharperRemoting()
+        .UseWebSharperRemoting(fun builder ->
+            builder.UseSitelets(false) |> ignore)
     |> ignore 
        
     app.Run()
